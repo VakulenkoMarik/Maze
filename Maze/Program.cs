@@ -2,6 +2,9 @@
 {
     static Random random = new Random();
 
+    // Supplement
+    static int moves = 10;
+
     // Symbols
     static char wall = '#';
     static char dog = '@';
@@ -78,6 +81,7 @@
     static void Draw()
     {
         Console.Clear();
+        Console.WriteLine("Moves: " + moves);
 
         for (int i = 0; i < height; i++)
         {
@@ -171,6 +175,11 @@
 
     static bool IsEndGame()
     {
+        if (moves <= 0)
+        {
+            return true;
+        }
+
         return reachedFinish;
     }
 
@@ -223,6 +232,8 @@
 
     static void GoTo(int newX, int newY)
     {
+        moves--;
+
         dogX = newX;
         dogY = newY;
     }
