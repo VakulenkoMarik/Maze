@@ -2,22 +2,46 @@
 {
     static Random random = new Random();
 
-    // field
-    static int width = 10;
-    static int height = 12;
-    static char[][] field = [];
-    static int blockFreq = 28;
-
-    // dog
+    // Symbols
+    static char wall = '#';
     static char dog = '@';
+    static char jetpack = 'M';
+    static char finish = 'Д';
+
+    // Field
+    static int width = 10, height = 12;
+    static int blockFreq = 28;
+    static char[][] field = [];
+
+    // Dog
     static int dogX = 0, dogY = 0;
 
-    // input
+    // Input
     static int dX = 0, dY = 0;
 
-    // finish
+    // Finish
     static int finishX = 0, finishY = 0;
     static bool reachedFinish = false;
+
+    // Jetpack
+    static int jetpackX = 0, jetpackY = 0;
+    static int jetpacksCount = 0;
+    static bool jetpackElevated = false;
+
+    static void Main(string[] args)
+    {
+        Generate();
+        Draw();
+
+        while (!IsEndGame())
+        {
+            GetInput();
+            Logic();
+            Draw();
+        }
+        
+        Console.Write("The end");
+    }
 
     static void GenerateField()
     {
@@ -34,7 +58,7 @@
 
                 if (randNum < blockFreq)
                 {
-                    symbol = '#';
+                    symbol = wall;
                 }
                 else
                 {
@@ -48,11 +72,13 @@
         finishX = random.Next(0, width - 1);
         finishY = random.Next(0, height - 1);
 
-        field[finishY][finishX] = 'Д';
+        field[finishY][finishX] = finish;
     }
 
     static void Draw()
     {
+        Console.Clear();
+
         for (int i = 0; i < height; i++)
         {
             for (int j = 0; j < width; j++)
@@ -62,6 +88,10 @@
                 if (i == dogY && j == dogX)
                 {
                     symbol = dog;
+                }
+                else if (i == jetpackY && j == jetpackX && !jetpackElevated)
+                {
+                    symbol = jetpack;
                 }
                 else
                 {
@@ -81,9 +111,26 @@
         dogY = random.Next(0, height - 1);
     }
 
+    static void PlaceJetpack()
+    {
+        jetpackX = random.Next(0, width - 1);
+        jetpackY = random.Next(0, height - 1);
+
+        if ((jetpackX, jetpackY) == (finishX, finishY))
+        {
+            PlaceJetpack();
+        }
+        else
+        {
+            field[jetpackY][jetpackX] = jetpack;
+        }
+    }
+
     static void Generate()
     {
         GenerateField();
+
+        PlaceJetpack();
         PlaceDog();
     }
 
@@ -104,20 +151,21 @@
         {
             dY = -1;
         }
-
-        if (firstSymbol == 'S' || firstSymbol == 's')
+        else if (firstSymbol == 'S' || firstSymbol == 's')
         {
             dY = 1;
         }
-
-        if (firstSymbol == 'A' || firstSymbol == 'a')
+        else if (firstSymbol == 'A' || firstSymbol == 'a')
         {
             dX = -1;
         }
-
-        if (firstSymbol == 'D' || firstSymbol == 'd')
+        else if (firstSymbol == 'D' || firstSymbol == 'd')
         {
             dX = 1;
+        }
+        else if (firstSymbol == 'E') // Exit
+        {
+            reachedFinish = true;
         }
     }
 
@@ -128,12 +176,27 @@
 
     static bool IsWalkable(int x, int y)
     {
-        if (field[y][x] == '#')
+        if (field[y][x] == wall)
         {
             return false;
         }
 
         return true;
+    }
+
+    static bool CanUseJetpack()
+    {
+        if (jetpacksCount > 0)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    static void UseJetpack()
+    {
+        jetpacksCount -= 1;
     }
 
     static bool CanGoTo(int newX, int newY)
@@ -145,6 +208,13 @@
 
         if (!IsWalkable(newX, newY))
         {
+            if (CanUseJetpack())
+            {
+                UseJetpack();
+                
+                return true;
+            }
+
             return false;
         }
 
@@ -173,25 +243,22 @@
         }
     }
 
+    static void CheckJetpackSelection()
+    {
+        if (dogX == jetpackX && dogY == jetpackY)
+        {
+            jetpackElevated = true;
+            jetpacksCount += 1;
+
+            field[jetpackY][jetpackX] = '.';
+        }
+    }
+
     static void Logic()
     {
         TryGoTo(dogX + dX, dogY + dY);
 
+        CheckJetpackSelection();
         CheckFinish();
-    }
-
-    static void Main(string[] args)
-    {
-        Generate();
-        Draw();
-
-        while (!IsEndGame())
-        {
-            GetInput();
-            Logic();
-            Draw();
-        }
-        
-        Console.Write("УІІІІІ");
     }
 }
