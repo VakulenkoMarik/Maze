@@ -78,6 +78,12 @@
         }
     }
 
+    static void ColoredText(string text, ConsoleColor color)
+    {
+        Console.ForegroundColor = color;
+        Console.WriteLine(text);
+    }
+
     static void SettingsMenu()
     {
         Console.Clear();
@@ -86,7 +92,7 @@
 
         Console.WriteLine("Enter the height of the field");
 
-        if (!int.TryParse(Console.ReadLine(), out newHeight) || newHeight <= 3 || newHeight > 100)
+        if (!int.TryParse(Console.ReadLine(), out newHeight) || newHeight <= 5 || newHeight > 100)
         {
             gameExeptionMessage = "Height error";
             return;
@@ -119,13 +125,8 @@
 
         Console.WriteLine(gameExeptionMessage);
 
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine("-\u0E4F MAZE \u0E4F- \n");
-
-        Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.WriteLine("- Play (a)");
-        Console.WriteLine("- Settings (b)");
-        Console.WriteLine("- Exit (c)");
+        ColoredText("-\u0E4F MAZE \u0E4F- \n", ConsoleColor.Green);
+        ColoredText("- Play (a) \n- Settings (b) \n- Exit (c)", ConsoleColor.Yellow);
     }
 
     static void CreateNewGame()
@@ -185,10 +186,11 @@
     static void Draw()
     {
         Console.Clear();
-        Console.ForegroundColor = ConsoleColor.Blue;
-        Console.WriteLine("Moves: " + moves);
+
+        ColoredText("Moves: " + moves, ConsoleColor.Blue);
 
         Console.ForegroundColor = ConsoleColor.White;
+
         for (int i = 0; i < height; i++)
         {
             for (int j = 0; j < width; j++)
