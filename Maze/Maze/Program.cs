@@ -1,10 +1,12 @@
-﻿class Maze
+﻿using System.Reflection.Metadata;
+
+class Maze
 {
     static Random random = new Random();
 
     // Supplement
     static int moves = 10;
-    static string gameExeptionMessage = "";
+    static string gameTitle = "";
 
     // Symbols
     static char wall = '#';
@@ -25,7 +27,7 @@
 
     // Finish
     static int finishX = 0, finishY = 0;
-    static bool reachedFinish = false;
+    static bool endGame = false;
 
     // Jetpack
     static int jetpackX = 0, jetpackY = 0;
@@ -40,20 +42,19 @@
     static void GoToMainMenu()
     {
         DrawMenuText();
-        MainMenuInput();
+        MainMenuLogic(MainMenuInput());
     }
 
-    static void MainMenuInput()
+    static char MainMenuInput()
     {
         string? inp = Console.ReadLine();
 
         if (string.IsNullOrEmpty(inp))
         {
-            MainMenuInput();
-            return;
+            return MainMenuInput();
         }
 
-        MainMenuLogic(inp[0]);
+        return inp[0];
     }
 
     static void MainMenuLogic(char symbol)
@@ -65,7 +66,7 @@
         }
         else if (symbol == 'b')
         {
-            SettingsMenu();
+            SettingsMenuLogic();
             GoToMainMenu();
         }
         else if (symbol == 'c')
@@ -84,46 +85,88 @@
         Console.WriteLine(text);
     }
 
-    static void SettingsMenu()
+    static void SettingsMenuLogic()
+    {
+        gameTitle = "";
+
+        if (!TrySetHeight(5, 50) || !TrySetWidth(5, 100) || !TrySetBlockFrequency(0, 90))
+        {
+            return;
+        }
+
+        gameTitle = "Success!";
+    }
+
+    static bool TrySetHeight(int min, int max)
+    {
+        string? input = ParameterInput("Enter height: ");
+        
+        if (!TryParseAndValidate(input, min, max, out int newHeight))
+        {
+            gameTitle = "Height error";
+            return false;
+        }
+
+        height = newHeight;
+
+        return true;
+    }
+
+    static bool TrySetWidth(int min, int max)
+    {
+        string? input = ParameterInput("Enter width: ");
+
+        if (!TryParseAndValidate(input, min, max, out int newWidth))
+        {
+            gameTitle = "Width error";
+            return false;
+        }
+
+        width = newWidth;
+
+        return true;
+    }
+
+    static bool TrySetBlockFrequency(int min, int max)
+    {
+        string? input = ParameterInput("Enter wall frequency: ");
+
+        if (!TryParseAndValidate(input, min, max, out int newBlockFreq))
+        {
+            gameTitle = "Frequency error";
+            return false;
+        }
+
+        blockFreq = newBlockFreq;
+
+        return true;
+    }
+
+    static string? ParameterInput(string text)
     {
         Console.Clear();
+        Console.WriteLine(text);
 
-        int newHeight, newWidth, newblockFreq;
+        return Console.ReadLine();
+    }
 
-        Console.WriteLine("Enter the height of the field");
+    static bool TryParseAndValidate(string? input, int min, int max, out int result)
+    {
+        result = 0;
 
-        if (!int.TryParse(Console.ReadLine(), out newHeight) || newHeight <= 5 || newHeight > 100)
+        if (!int.TryParse(input, out result) || result < min || result > max)
         {
-            gameExeptionMessage = "Height error";
-            return;
+            return false;
         }
 
-        Console.WriteLine("Enter the width of the field");
-
-        if (!int.TryParse(Console.ReadLine(), out newWidth) || newWidth <= 4 || newWidth > 50)
-        {
-            gameExeptionMessage = "Width error";
-            return;
-        }
-
-        Console.WriteLine("Enter the frequency of the wall appearance");
-
-        if (!int.TryParse(Console.ReadLine(), out newblockFreq) || newblockFreq <= 0 || newblockFreq >= 90)
-        {
-            gameExeptionMessage = "Frequency error";
-            return;
-        }
-
-        gameExeptionMessage = "";
-
-        (height, width, blockFreq) = (newHeight, newWidth, newblockFreq);
+        return true;
     }
 
     static void DrawMenuText()
     {
         Console.Clear();
 
-        Console.WriteLine(gameExeptionMessage);
+        Console.WriteLine(gameTitle);
 
         ColoredText("-\u0E4F MAZE \u0E4F- \n", ConsoleColor.Green);
         ColoredText("- Play (a) \n- Settings (b) \n- Exit (c)", ConsoleColor.Yellow);
@@ -131,8 +174,11 @@
 
     static void CreateNewGame()
     {
-        reachedFinish = false;
+        gameTitle = "";
+
+        endGame = false;
         jetpackElevated = false;
+
         moves = 10;
     }
 
@@ -277,18 +323,45 @@
         }
         else if (firstSymbol == 'E') // Exit
         {
-            reachedFinish = true;
+            endGame = true;
         }
     }
 
     static bool IsEndGame()
     {
-        if (moves <= 0)
+        if (IsWin())
+        {
+            gameTitle = "WIN";
+            endGame = true;
+        }
+
+        if (IsFail())
+        {
+            gameTitle = "FAIL";
+            endGame = true;
+        }
+        
+        return endGame;
+    }
+
+    static bool IsFail()
+    {
+        if (moves <= 0 && !endGame)
         {
             return true;
         }
 
-        return reachedFinish;
+        return false;
+    }
+
+    static bool IsWin()
+    {
+        if ((dogX, dogY) == (finishX, finishY))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     static bool IsWalkable(int x, int y)
@@ -354,14 +427,6 @@
         }
     }
 
-    static void CheckFinish()
-    {
-        if (dogX == finishX && dogY == finishY)
-        {
-            reachedFinish = true;
-        }
-    }
-
     static void CheckJetpackSelection()
     {
         if (dogX == jetpackX && dogY == jetpackY)
@@ -378,6 +443,5 @@
         TryGoTo(dogX + dX, dogY + dY);
 
         CheckJetpackSelection();
-        CheckFinish();
     }
 }
